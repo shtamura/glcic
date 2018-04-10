@@ -63,9 +63,12 @@ model, _ = network.compile_generator(
 # バッチ次元追加
 in_masked_image = np.expand_dims(masked_image, 0)
 in_bin_mask = np.expand_dims(bin_mask, 0)
+# 入力イメージの正規化（0~255から-1~1へ）
+normalized_image = gen.normalize_image(in_masked_image)
+
 # 予測
 out_completion_image = \
-    model.predict([in_masked_image, in_bin_mask], verbose=1,
+    model.predict([normalized_image, in_bin_mask], verbose=1,
                   batch_size=config.batch_size)
 # バッチ次元削除
 completion_image = np.squeeze(out_completion_image, 0)
@@ -74,6 +77,11 @@ completion_image = gen.denormalize_image(completion_image)
 
 # 入力画像、出力画像を保存
 template = re.split('/|\.', args.input_path)[-2] + '_{}.png'
+
+# check = np.squeeze(normalized_image, 0)
+# check = gen.denormalize_image(check)
+# cv2.imwrite(template.format('_out_check'), check)
+
 # 入力画像
 cv2.imwrite(template.format('_in_res'), resized_image)
 bin_mask = np.expand_dims(bin_mask, -1)
