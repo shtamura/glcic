@@ -1,9 +1,12 @@
 import argparse
+import glob
 import logging
+import os
 import re
 import sys
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
@@ -32,7 +35,7 @@ argparser = argparse.ArgumentParser(
     description="Globally and Locally Consistent Image Completion(GLCIC)"
     + " - generae image.")
 argparser.add_argument('--input_path', type=str,
-                       required=True, help="入力画像ファイルのパス." +
+                       required=True, help="入力画像ファイルのパス.[,]区切りで複数指定.ディレクトリ指定の場合は配下のファイルを全て読み込む." +
                        "data_dir/train, data_dir/valの両方がある想定.")
 argparser.add_argument('--weight_path', type=str,
                        required=True, help="モデルの重みファイルのパス")
@@ -45,11 +48,6 @@ config.batch_size = 1
 # 入力画像の読み込み
 # リサイズ、ランダムに切り抜き
 gen = DataGenerator(config)
-resized_image, bin_mask, masked_image, mask_window = \
-    gen.load_image(args.input_path)
-if resized_image is None:
-    logger.warn("指定の画像%sが存在しません.", args.input_path)
-    sys.exit()
 
 # 学習モデル
 network = Glcic(batch_size=config.batch_size, input_shape=config.input_shape,
@@ -60,41 +58,73 @@ model, _ = network.compile_generator(
     gpu_num=config.gpu_num,
     learning_rate=config.learning_rate)
 
-# バッチ次元追加
-in_masked_image = np.expand_dims(masked_image, 0)
-in_bin_mask = np.expand_dims(bin_mask, 0)
-# 入力イメージの正規化（0~255から-1~1へ）
-normalized_image = gen.normalize_image(in_masked_image)
 
-# 予測
-out_completion_image = \
-    model.predict([normalized_image, in_bin_mask], verbose=1,
-                  batch_size=config.batch_size)
-# バッチ次元削除
-completion_image = np.squeeze(out_completion_image, 0)
-# 非正規化（-1~1から0~255に戻す）
-completion_image = gen.denormalize_image(completion_image)
+def pred(path):
+    logger.info("input_path: %s", path)
+    # 入力画像
+    resized_image, bin_mask, masked_image, mask_window = \
+        gen.load_image(path)
+    if resized_image is None:
+        logger.warn("指定の画像%sが存在しません.", args.input_path)
+        sys.exit()
 
-# 入力画像、出力画像を保存
-template = re.split('/|\.', args.input_path)[-2] + '_{}.png'
+    # バッチ次元追加
+    in_masked_image = np.expand_dims(masked_image, 0)
+    in_bin_mask = np.expand_dims(bin_mask, 0)
+    # 入力イメージの正規化（0~255から-1~1へ）
+    normalized_image = gen.normalize_image(in_masked_image)
 
-# check = np.squeeze(normalized_image, 0)
-# check = gen.denormalize_image(check)
-# cv2.imwrite(template.format('_out_check'), check)
+    # 予測
+    out_completion_image = \
+        model.predict([normalized_image, in_bin_mask], verbose=1,
+                      batch_size=config.batch_size)
+    # バッチ次元削除
+    completion_image = np.squeeze(out_completion_image, 0)
+    # 非正規化（-1~1から0~255に戻す）
+    completion_image = gen.denormalize_image(completion_image)
 
-# 入力画像
-cv2.imwrite(template.format('_in_res'), resized_image)
-bin_mask = np.expand_dims(bin_mask, -1)
-cv2.imwrite(template.format('_in_bin'), bin_mask * 255)
-cv2.imwrite(template.format('_in_msk'), masked_image)
+    # 入力画像、出力画像を保存
+    template = './out/' + re.split('/|\.', path)[-2] + '_{}.png'
 
-# 出力画像
-cv2.imwrite(template.format('_out_raw'), completion_image)
-# マスク部分のみ
-cropped = completion_image * bin_mask
-cv2.imwrite(template.format('_out_crp'), cropped)
-# マスク部分を入力画像に重ねる
-y1, x1, y2, x2 = mask_window
-merged = resized_image.copy()
-merged[y1:y2 + 1, x1:x2 + 1] = completion_image[y1:y2 + 1, x1:x2 + 1]
-cv2.imwrite(template.format('_out_mrg'), merged)
+    # 入力画像
+    bin_mask = np.expand_dims(bin_mask, -1)
+    # 出力画像
+    # マスク部分のみ
+    cropped = completion_image * bin_mask
+    # マスク部分を入力画像に重ねる
+    y1, x1, y2, x2 = mask_window
+    merged = resized_image.copy()
+    merged[y1:y2 + 1, x1:x2 + 1] = completion_image[y1:y2 + 1, x1:x2 + 1]
+
+    # cv2.imwrite(template.format('_in_res'), resized_image)
+    # cv2.imwrite(template.format('_in_bin'), bin_mask * 255)
+    # cv2.imwrite(template.format('_in_msk'), masked_image)
+    # cv2.imwrite(template.format('_out_raw'), completion_image)
+    # cv2.imwrite(template.format('_out_crp'), cropped)
+    # cv2.imwrite(template.format('_out_mrg'), merged)
+
+    masked_image = cv2.cvtColor(masked_image, cv2.COLOR_BGR2RGB)
+    merged = cv2.cvtColor(merged, cv2.COLOR_BGR2RGB)
+
+    def show_image(_img, _label, _num):
+        plt.subplot(1, 2, _num)
+        plt.imshow(_img)
+        # plt.axis('off')
+        plt.gca().get_xaxis().set_ticks_position('none')
+        plt.gca().get_yaxis().set_ticks_position('none')
+        plt.tick_params(labelbottom='off')
+        plt.tick_params(labelleft='off')
+        plt.xlabel(_label)
+
+    show_image(masked_image, 'Input', 1)
+    show_image(merged, 'Output', 2)
+    plt.savefig(template.format(''))
+
+
+if os.path.isdir(args.input_path):
+    paths = glob.glob(os.path.join(args.input_path, '*.jpg'))
+else:
+    paths = args.input_path.split(',')
+
+for path in paths:
+    pred(path)
