@@ -118,8 +118,8 @@ val_data_generator = dataset.DataGenerator(config).generate(
     os.path.join(args.data_dir, "val"), train_generator, train_discriminator)
 
 # コールバック準備
-model_file_path = filepath = './nnmodel/glcic-stage{}-{}'.format(
-    args.stage, '-{epoch:02d}-{val_loss:.2f}.h5')
+model_file_path = './nnmodel/glcic-stage{}-{}'.format(
+    args.stage, '{epoch:02d}-{val_loss:.2f}.h5')
 callbacks = [keras.callbacks.TerminateOnNaN(),
              keras.callbacks.TensorBoard(log_dir='./tb_log',
                                          histogram_freq=0,
@@ -150,6 +150,6 @@ model.fit_generator(train_data_generator,
                     validation_steps=20)
 
 # 訓練終了時の重みも保存
-model.save_weights(
-    './model/glcic-latest-stage{}-{epoch:02d}-{val_loss:.2f}.h5'.format(
-        args.stage))
+model_file_path = './nnmodel/glcic-latest-stage{}-{}'.format(
+    args.stage, '{epoch:02d}-{val_loss:.2f}.h5')
+model.save_weights(model_file_path)
