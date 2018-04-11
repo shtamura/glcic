@@ -67,8 +67,8 @@ if args.stage == 1:
         gpu_num=config.gpu_num,
         learning_rate=config.learning_rate)
     train_discriminator = False
-    steps_per_epoch = 400
-    epochs = 450
+    steps_per_epoch = 100
+    epochs = 100  # batch_size(16) * 100 * 100 iterations per stage
 elif args.stage == 2:
     # discriminatorのみ訓練
     model, base_model = network.compile_all(
@@ -76,8 +76,8 @@ elif args.stage == 2:
         gpu_num=config.gpu_num,
         learning_rate=config.learning_rate)
     train_generator = False
-    steps_per_epoch = 300
-    epochs = 300
+    steps_per_epoch = 100
+    epochs = 100
 elif args.stage == 3:
     # 相互訓練
     model, base_model = network.compile_all(
@@ -85,8 +85,8 @@ elif args.stage == 3:
         gpu_num=config.gpu_num,
         learning_rate=config.learning_rate,
         d_loss_alpha=config.d_loss_alpha)
-    steps_per_epoch = 300
-    epochs = 300
+    steps_per_epoch = 100
+    epochs = 100
 
 logger.info("train_generator:%s, train_discriminator:%s, "
             + "steps_per_epoch:%s, epochs:%s",
@@ -135,7 +135,7 @@ callbacks = [keras.callbacks.TerminateOnNaN(),
                                              verbose=1,
                                              save_weights_only=True,
                                              save_best_only=False,
-                                             period=50)]
+                                             period=20)]
 
 # 訓練
 model.fit_generator(train_data_generator,
@@ -147,7 +147,7 @@ model.fit_generator(train_data_generator,
                     use_multiprocessing=True,
                     callbacks=callbacks,
                     validation_data=val_data_generator,
-                    validation_steps=20)
+                    validation_steps=5)
 
 # 訓練終了時の重みも保存
 model_file_path = './nnmodel/glcic-latest-stage{}-{}'.format(
