@@ -52,7 +52,7 @@ logger.info("args: %s", args)
 
 # GPU数やバッチ数を指定。複数GPUでの動作は未検証
 config.gpu_num = 1
-config.batch_size = 2
+config.batch_size = 16
 util.out_name_pattern = "(.+_loss$|.+_debug$)"
 
 # 学習モデル
