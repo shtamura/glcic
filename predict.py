@@ -104,6 +104,7 @@ def pred(path):
     # cv2.imwrite(template.format('_out_crp'), cropped)
     # cv2.imwrite(template.format('_out_mrg'), merged)
 
+    resized_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)
     masked_image = cv2.cvtColor(masked_image, cv2.COLOR_BGR2RGB)
     merged = cv2.cvtColor(merged, cv2.COLOR_BGR2RGB)
 

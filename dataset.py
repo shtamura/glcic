@@ -20,10 +20,10 @@ class DataGenerator:
         return (image / 127.5) - 1
 
     def denormalize_image(self, image):
-        """generatorの出力はtanhで活性化されていることを考慮し、-1~1に正規化する。
+        """generatorの出力(-1~1)を元に0~255に戻す。
         """
         # 127.5=RGB値である255の半分
-        return (image + 1) * 127.5
+        return ((image + 1) * 127.5).astype(np.uint8)
 
     def load_image(self, path):
         """

@@ -25,9 +25,9 @@ class Glcic:
         self.input_shape = input_shape
         self.mask_shape = mask_shape
 
-    def _relu(self, input, name_prefix, leakly=True, trainable=True):
-        if leakly:
-            out = KLA.LeakyReLU(name='{}_leaklyrelu'.format(name_prefix),
+    def _relu(self, input, name_prefix, leaky=True, trainable=True):
+        if leaky:
+            out = KLA.LeakyReLU(name='{}_leakyrelu'.format(name_prefix),
                                 trainable=trainable)(input)
         else:
             out = KL.Activation('relu', name='{}_relu'.format(name_prefix),
@@ -35,19 +35,19 @@ class Glcic:
         return out
 
     def _conv2d_part(self, name_prefix, input, filters, kernel_size, strides=1,
-                     padding='same', trainable=True, leakly=True):
+                     padding='same', trainable=True, leaky=True):
         out = KL.Conv2D(filters=filters, kernel_size=kernel_size,
                         strides=strides, kernel_initializer='he_uniform',
                         padding='same', name='{}'.format(name_prefix),
                         trainable=trainable)(input)
         out = KL.BatchNormalization(name='{}_bn'.format(name_prefix),
                                     trainable=trainable)(out)
-        out = self._relu(out, name_prefix, leakly=leakly, trainable=trainable)
+        out = self._relu(out, name_prefix, leaky=leaky, trainable=trainable)
         return out
 
     def _dilated_conv2d_part(self, name_prefix, input, filters, kernel_size,
                              dilation_rate, padding='same', trainable=True,
-                             leakly=True):
+                             leaky=True):
         out = KL.Conv2D(filters=filters, kernel_size=kernel_size,
                         strides=1, kernel_initializer='he_uniform',
                         dilation_rate=dilation_rate, padding='same',
@@ -55,11 +55,11 @@ class Glcic:
                         trainable=trainable)(input)
         out = KL.BatchNormalization(name='{}_bn'.format(name_prefix),
                                     trainable=trainable)(out)
-        out = self._relu(out, name_prefix, leakly=leakly, trainable=trainable)
+        out = self._relu(out, name_prefix, leaky=leaky, trainable=trainable)
         return out
 
     def _deconv2d_part(self, name_prefix, input, filters, kernel_size,
-                       strides=1, padding='same', trainable=True, leakly=True):
+                       strides=1, padding='same', trainable=True, leaky=True):
         out = KL.Conv2DTranspose(filters=filters, kernel_size=kernel_size,
                                  strides=strides,
                                  kernel_initializer='he_uniform',
@@ -68,7 +68,7 @@ class Glcic:
                                  trainable=trainable)(input)
         out = KL.BatchNormalization(name='{}_bn'.format(name_prefix),
                                     trainable=trainable)(out)
-        out = self._relu(out, name_prefix, leakly=leakly, trainable=trainable)
+        out = self._relu(out, name_prefix, leaky=leaky, trainable=trainable)
         return out
 
     def _build_model(self, inputs, outputs, name, trainable=True):
@@ -174,23 +174,23 @@ class Glcic:
         # input = KL.Input(
         #     shape=self.input_shape, name='gd_input', dtype='float32')
         out = self._conv2d_part('gd_conv1', input, filters=64,
-                                kernel_size=5, strides=2, leakly=True)
+                                kernel_size=5, strides=2, leaky=True)
         out = self._conv2d_part('gd_conv2', out, filters=128,
-                                kernel_size=5, strides=2, leakly=True)
+                                kernel_size=5, strides=2, leaky=True)
         out = self._conv2d_part('gd_conv3', out, filters=256,
-                                kernel_size=5, strides=2, leakly=True)
+                                kernel_size=5, strides=2, leaky=True)
         out = self._conv2d_part('gd_conv4', out, filters=512,
-                                kernel_size=5, strides=2, leakly=True)
+                                kernel_size=5, strides=2, leaky=True)
         out = self._conv2d_part('gd_conv5', out, filters=512,
-                                kernel_size=5, strides=2, leakly=True)
+                                kernel_size=5, strides=2, leaky=True)
         out = self._conv2d_part('gd_conv6', out, filters=512,
-                                kernel_size=5, strides=2, leakly=True)
+                                kernel_size=5, strides=2, leaky=True)
         # out = KL.Flatten(name='gd_flatten7')(out)
         # out = KL.Lambda(lambda x: K.batch_flatten(x),
         #                 name='gd_flatten7')(out)
         # Flatten()だとinput_shape不明と言われてflatにできなかったため、形状明示してreshape
         out = KL.Reshape((4 * 4 * 512,), name='gd_flatten7')(out)
-        out = KL.Dense(1024, kernel_initializer='he_uniform',
+        out = KL.Dense(1024, kernel_initializer='glorot_uniform',
                        name='gd_fc8')(out)
 
         return out
@@ -199,21 +199,21 @@ class Glcic:
         # input = KL.Input(
         #     shape=self.mask_shape, name='ld_input', dtype='float32')
         out = self._conv2d_part('ld_conv1', input, filters=64,
-                                kernel_size=5, strides=2, leakly=True)
+                                kernel_size=5, strides=2, leaky=True)
         out = self._conv2d_part('ld_conv2', out, filters=128,
-                                kernel_size=5, strides=2, leakly=True)
+                                kernel_size=5, strides=2, leaky=True)
         out = self._conv2d_part('ld_conv3', out, filters=256,
-                                kernel_size=5, strides=2, leakly=True)
+                                kernel_size=5, strides=2, leaky=True)
         out = self._conv2d_part('ld_conv4', out, filters=512,
-                                kernel_size=5, strides=2, leakly=True)
+                                kernel_size=5, strides=2, leaky=True)
         out = self._conv2d_part('ld_conv5', out, filters=512,
-                                kernel_size=5, strides=2, leakly=True)
+                                kernel_size=5, strides=2, leaky=True)
         # out = KL.Flatten(name='ld_flatten6')(out)
         # out = KL.Lambda(lambda x: K.batch_flatten(x),
         #                 name='ld_flatten6')(out)
         # Flatten()だとinput_shape不明と言われてflatにできなかったため、形状明示してreshape
         out = KL.Reshape((4 * 4 * 512,), name='ld_flatten6')(out)
-        out = KL.Dense(1024, kernel_initializer='he_uniform',
+        out = KL.Dense(1024, kernel_initializer='glorot_uniform',
                        name='ld_fc7')(out)
 
         return out
@@ -223,7 +223,7 @@ class Glcic:
         l_output = self._local_discriminator(input_local)
         out = KL.Lambda(lambda x: K.concatenate(x),
                         name='d_concat1')([g_output, l_output])
-        out = KL.Dense(1, kernel_initializer='he_uniform',
+        out = KL.Dense(1, kernel_initializer='glorot_uniform',
                        name='d_fc2')(out)
         # 論文中ではsigmoid -> cross_entropyだが、sigmoidした時点で0or1に偏り、損失が固定化されてしまう。
         # 勾配が早々に消失しているためと思われる。。。
@@ -257,7 +257,7 @@ class Glcic:
             shape=self.input_shape[:2], name='input_bin_mask', dtype='float32')
 
         model = self._generator(input_masked_image, input_bin_mask)
-        wrapped_model = self._compile_model(model, loss.generator,
+        wrapped_model = self._compile_model(model, 'mean_squared_error',
                                             gpu_num, learning_rate)
         return wrapped_model, model
 
