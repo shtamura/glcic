@@ -35,7 +35,7 @@ class SaveGeneratorOutput(keras.callbacks.Callback):
         outputs = np.split(outputs, outputs.shape[0], axis=0)
         for i, output in enumerate(outputs):
             output = self.data_generator.denormalize_image(output)
-            cv2.imwrite('./out/{}.jpg'.format(i))
+            cv2.imwrite('./out/{}.jpg'.format(i), output)
 
 
 FORMAT = '%(asctime)-15s %(levelname)s #[%(thread)d] %(message)s'
