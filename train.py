@@ -163,7 +163,6 @@ if args.testimage_path:
     test_data_generator = dataset.DataGenerator(config).generate(
         args.testimage_path, False, False)
     inputs, _ = next(test_data_generator)
-    masked_images, bin_masks = inputs
     callbacks.append(SaveGeneratorOutput(config.batch_size, inputs))
 
 # 訓練
