@@ -66,7 +66,8 @@ python3 predict.py --weights_path ./model/glcic-stage3-xx.h5 --input_path /path/
 
 # 課題
 学習中...
-
+- 複数GPU対応
+  - 未検証
 
 # 参考資料
 - http://hi.cs.waseda.ac.jp/~iizuka/projects/completion/ja/

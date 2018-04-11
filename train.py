@@ -1,6 +1,8 @@
 import argparse
 import logging
 import os
+import cv2
+import numpy as np
 import tensorflow as tf
 import keras.callbacks
 from keras import backend as K
@@ -18,6 +20,20 @@ class PrintAccuracy(keras.callbacks.Callback):
 
     def on_batch_end(self, batch, logs={}):
         self.logger.info("accuracy: %s", logs.get('acc'))
+
+
+class SaveGeneratorOutput(keras.callbacks.Callback):
+    def __init__(self, batch_size, tests, **kwargs):
+        super().__init__(**kwargs)
+        self.tests = tests
+        self.tests = tests
+
+    def on_epoch_end(self, epoch, logs={}):
+        outputs = self.model.predict(self.tests, batch_size=self.batch_size)
+        outputs = np.split(outputs)
+        for i, output in enumerate(outputs):
+            output = dataset.denormalize_image(output)
+            cv2.imwrite('./out/{}.jpg'.format(i))
 
 
 FORMAT = '%(asctime)-15s %(levelname)s #[%(thread)d] %(message)s'
@@ -47,6 +63,10 @@ argparser.add_argument('--stage', type=int,
                        choices=[1, 2, 3])
 argparser.add_argument('--weights_path', type=str,
                        required=False, help="モデルの重みファイルのパス")
+argparser.add_argument('--testimage_path', type=str,
+                       required=False, help="epoch毎にpredictする画像が" +
+                       "格納されたディレクトリ.格納されている画像数はバッチサイズと" +
+                       "同じであること。")
 args = argparser.parse_args()
 logger.info("args: %s", args)
 
@@ -136,6 +156,14 @@ callbacks = [keras.callbacks.TerminateOnNaN(),
                                              save_weights_only=True,
                                              save_best_only=False,
                                              period=20)]
+
+if args.testimage_path:
+    # epoch毎にgeneratorの出力を保存
+    test_data_generator = dataset.DataGenerator(config).generate(
+        args.testimage_path, False, False)
+    inputs, _ = next(test_data_generator)
+    masked_images, bin_masks = inputs
+    callbacks.append(SaveGeneratorOutput(config.batch_size, inputs))
 
 # 訓練
 model.fit_generator(train_data_generator,
