@@ -189,8 +189,7 @@ class Glcic:
         # out = KL.Lambda(lambda x: K.batch_flatten(x),
         #                 name='gd_flatten7')(out)
         # Flatten()だとinput_shape不明と言われてflatにできなかったため、形状明示してreshape
-        out = KL.Reshape((4 * 4 * self.input_shape * 2,),
-                         name='gd_flatten7')(out)
+        out = KL.Reshape((4 * 4 * 512,), name='gd_flatten7')(out)
         out = KL.Dense(1024, kernel_initializer='he_uniform',
                        name='gd_fc8')(out)
 
@@ -213,8 +212,7 @@ class Glcic:
         # out = KL.Lambda(lambda x: K.batch_flatten(x),
         #                 name='ld_flatten6')(out)
         # Flatten()だとinput_shape不明と言われてflatにできなかったため、形状明示してreshape
-        out = KL.Reshape((4 * 4 * self.input_shape * 2,),
-                         name='ld_flatten6')(out)
+        out = KL.Reshape((4 * 4 * 512,), name='ld_flatten6')(out)
         out = KL.Dense(1024, kernel_initializer='he_uniform',
                        name='ld_fc7')(out)
 
