@@ -23,8 +23,9 @@ class PrintAccuracy(keras.callbacks.Callback):
 
 
 class SaveGeneratorOutput(keras.callbacks.Callback):
-    def __init__(self, batch_size, tests, **kwargs):
+    def __init__(self, data_generator, batch_size, tests, **kwargs):
         super().__init__(**kwargs)
+        self.data_generator = data_generator
         self.batch_size = batch_size
         self.tests = tests
 
@@ -33,7 +34,7 @@ class SaveGeneratorOutput(keras.callbacks.Callback):
                                      verbose=1)
         outputs = np.split(outputs, outputs.shape[0], axis=0)
         for i, output in enumerate(outputs):
-            output = dataset.denormalize_image(output)
+            output = data_generator.denormalize_image(output)
             cv2.imwrite('./out/{}.jpg'.format(i))
 
 
@@ -133,9 +134,10 @@ for i, layer in enumerate(model.layers):
     logger.info('%s %s:%s', i, name, trainable)
 
 # 学習、検証データ生成器の準備
-train_data_generator = dataset.DataGenerator(config).generate(
+gen = dataset.DataGenerator(config)
+train_data_generator = gen.generate(
     os.path.join(args.data_dir, "train"), train_generator, train_discriminator)
-val_data_generator = dataset.DataGenerator(config).generate(
+val_data_generator = gen.generate(
     os.path.join(args.data_dir, "val"), train_generator, train_discriminator)
 
 # コールバック準備
@@ -160,10 +162,9 @@ callbacks = [keras.callbacks.TerminateOnNaN(),
 
 if args.testimage_path:
     # epoch毎にgeneratorの出力を保存
-    test_data_generator = dataset.DataGenerator(config).generate(
-        args.testimage_path, False, False)
+    test_data_generator = gen.generate(args.testimage_path, False, False)
     inputs, _ = next(test_data_generator)
-    callbacks.append(SaveGeneratorOutput(config.batch_size, inputs))
+    callbacks.append(SaveGeneratorOutput(gen, config.batch_size, inputs))
 
 # 訓練
 model.fit_generator(train_data_generator,
