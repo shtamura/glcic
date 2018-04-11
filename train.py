@@ -31,7 +31,7 @@ class SaveGeneratorOutput(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs={}):
         outputs = self.model.predict(self.tests, batch_size=self.batch_size,
                                      verbose=1)
-        outputs = np.split(outputs)
+        outputs = np.split(outputs, outputs.shape[0], axis=0)
         for i, output in enumerate(outputs):
             output = dataset.denormalize_image(output)
             cv2.imwrite('./out/{}.jpg'.format(i))
