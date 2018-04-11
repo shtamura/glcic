@@ -117,6 +117,7 @@ def pred(path):
         plt.tick_params(labelleft='off')
         plt.xlabel(_label)
 
+    plt.figure(figsize=(6, 3))
     show_image(masked_image, 'Input', 1)
     show_image(merged, 'Output', 2)
     show_image(resized_image, 'Ground Trueth', 3)

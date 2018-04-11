@@ -1,5 +1,5 @@
 class Config:
-    batch_size = 2
+    batch_size = 16
     gpu_num = 0
     learning_rate = 0.001  # kerasのAdamのデフォルト値
     # Discriminatorの損失関数で用いるパラメータ
