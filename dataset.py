@@ -53,6 +53,8 @@ class DataGenerator:
         y2 = y1 + self.config.mask_size
         x2 = x1 + self.config.mask_size
         masked_image = resized_image.copy()
+        # 論文中では「データセット中の画像の平均ピクセル値で塗りつぶす」とあるが0にする。
+        # ネットワークに投入する際の正規化で−1（非0）になるのでこれで良さそう。
         masked_image[y1:y2 + 1, x1:x2 + 1, :] = 0
 
         # バイナリマスク
