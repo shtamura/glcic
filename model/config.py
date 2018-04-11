@@ -16,7 +16,7 @@ class Config:
 
     @property
     def mask_size(self):
-        return self._input_size
+        return self._mask_size
 
     @mask_size.setter
     def mask_size(self, value):
