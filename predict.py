@@ -35,7 +35,8 @@ argparser = argparse.ArgumentParser(
     description="Globally and Locally Consistent Image Completion(GLCIC)"
     + " - generae image.")
 argparser.add_argument('--input_path', type=str,
-                       required=True, help="入力画像ファイルのパス.[,]区切りで複数指定.ディレクトリ指定の場合は配下のファイルを全て読み込む." +
+                       required=True, help="入力画像ファイルのパス." +
+                       "[,]区切りで複数指定.ディレクトリ指定の場合は配下のファイルを全て読み込む." +
                        "data_dir/train, data_dir/valの両方がある想定.")
 argparser.add_argument('--weight_path', type=str,
                        required=True, help="モデルの重みファイルのパス")
@@ -90,7 +91,7 @@ def pred(path):
     bin_mask = np.expand_dims(bin_mask, -1)
     # 出力画像
     # マスク部分のみ
-    cropped = completion_image * bin_mask
+    # cropped = completion_image * bin_mask
     # マスク部分を入力画像に重ねる
     y1, x1, y2, x2 = mask_window
     merged = resized_image.copy()
@@ -107,7 +108,7 @@ def pred(path):
     merged = cv2.cvtColor(merged, cv2.COLOR_BGR2RGB)
 
     def show_image(_img, _label, _num):
-        plt.subplot(1, 2, _num)
+        plt.subplot(1, 3, _num)
         plt.imshow(_img)
         # plt.axis('off')
         plt.gca().get_xaxis().set_ticks_position('none')
@@ -118,6 +119,7 @@ def pred(path):
 
     show_image(masked_image, 'Input', 1)
     show_image(merged, 'Output', 2)
+    show_image(resized_image, 'Ground Trueth', 3)
     plt.savefig(template.format(''))
 
 

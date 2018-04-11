@@ -35,7 +35,7 @@ class DataGenerator:
         image = cv2.imread(path, cv2.IMREAD_COLOR)
         if image is None:
             logger.warn("指定の画像が存在しない")
-            return None, None, None
+            return None, None, None, None
 
         resized_image, window, _ = \
             resize_with_padding(image,
@@ -45,7 +45,7 @@ class DataGenerator:
         y1, x1, y2, x2 = window
         if y2 - y1 < self.config.mask_size or x2 - x1 < self.config.mask_size:
             logger.warn("指定のマスク領域が確保出来ない画像なのでスキップ: %s", window)
-            return None, None, None
+            return None, None, None, None
 
         # マスク領域はランダム
         y1 = random.randint(y1, y2 - self.config.mask_size - 1)
