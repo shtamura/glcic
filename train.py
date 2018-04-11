@@ -25,11 +25,12 @@ class PrintAccuracy(keras.callbacks.Callback):
 class SaveGeneratorOutput(keras.callbacks.Callback):
     def __init__(self, batch_size, tests, **kwargs):
         super().__init__(**kwargs)
-        self.tests = tests
+        self.batch_size = batch_size
         self.tests = tests
 
     def on_epoch_end(self, epoch, logs={}):
-        outputs = self.model.predict(self.tests, batch_size=self.batch_size)
+        outputs = self.model.predict(self.tests, batch_size=self.batch_size,
+                                     verbose=1)
         outputs = np.split(outputs)
         for i, output in enumerate(outputs):
             output = dataset.denormalize_image(output)
