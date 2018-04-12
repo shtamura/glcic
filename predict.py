@@ -1,10 +1,13 @@
+import matplotlib
+# displayがない環境でmatplotlibを利用してファイル出力するためのbackendライブラリ指定。
+# matplotlib.*をロードする前に設定しないと効果なし。
+matplotlib.use('Agg')  # noqa
 import argparse
 import glob
 import logging
 import os
 import re
 import sys
-
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
