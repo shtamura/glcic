@@ -32,11 +32,16 @@ class SaveGeneratorOutput(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs={}):
         outputs = self.model.predict(self.tests, batch_size=self.batch_size,
                                      verbose=1)
-        outputs = np.split(outputs, outputs.shape[0], axis=0)
-        for i, output in enumerate(outputs):
-            output = np.squeeze(output, 0)
-            output = self.data_generator.denormalize_image(output)
-            cv2.imwrite('./out/epoch{}_{}.png'.format(epoch, i), output)
+        if not isinstance(outputs, list):
+            outputs = [outputs]
+        for output in outputs:
+            if len(output.shape) == 4 and output.shape[3] == 3:
+                # おそらく画像
+                output = np.split(output, output.shape[0], axis=0)
+                for i, image in enumerate(output):
+                    image = np.squeeze(image, 0)
+                    image = self.data_generator.denormalize_image(image)
+                    cv2.imwrite('./out/epoch{}_{}.png'.format(epoch, i), image)
 
 
 FORMAT = '%(asctime)-15s %(levelname)s #[%(thread)d] %(message)s'
@@ -161,7 +166,7 @@ callbacks = [keras.callbacks.TerminateOnNaN(),
                                              save_best_only=False,
                                              period=20)]
 
-if args.testimage_path:
+if args.testimage_path and not args.stage == 2:
     # epoch毎にgeneratorの出力を保存
     test_data_generator = gen.generate(args.testimage_path, False, False)
     inputs, _ = next(test_data_generator)
