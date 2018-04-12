@@ -186,8 +186,6 @@ class Glcic:
         out = self._conv2d_part('gd_conv6', out, filters=512,
                                 kernel_size=5, strides=2, leaky=True)
         # out = KL.Flatten(name='gd_flatten7')(out)
-        # out = KL.Lambda(lambda x: K.batch_flatten(x),
-        #                 name='gd_flatten7')(out)
         # Flatten()だとinput_shape不明と言われてflatにできなかったため、形状明示してreshape
         out = KL.Reshape((4 * 4 * 512,), name='gd_flatten7')(out)
         out = KL.Dense(1024, kernel_initializer='glorot_uniform',
@@ -209,8 +207,6 @@ class Glcic:
         out = self._conv2d_part('ld_conv5', out, filters=512,
                                 kernel_size=5, strides=2, leaky=True)
         # out = KL.Flatten(name='ld_flatten6')(out)
-        # out = KL.Lambda(lambda x: K.batch_flatten(x),
-        #                 name='ld_flatten6')(out)
         # Flatten()だとinput_shape不明と言われてflatにできなかったため、形状明示してreshape
         out = KL.Reshape((4 * 4 * 512,), name='ld_flatten6')(out)
         out = KL.Dense(1024, kernel_initializer='glorot_uniform',
@@ -261,40 +257,33 @@ class Glcic:
                                             gpu_num, learning_rate)
         return wrapped_model, model
 
-    def _crop_local(self, reals, fakes, masks):
-        """reals, fakes を masks で切り抜いたデータを得る
+    def _crop_local(self, reals, fakes, mask_areas):
+        """reals, fakes を mask_areasの領域 で切り抜いたデータを得る
         """
         # print("reals, fakes, masks:", reals, fakes, masks)
         # バッチ毎に分割して処理する
         fakes = tf.split(fakes, self.batch_size)
         reals = tf.split(reals, self.batch_size)
-        masks = tf.split(masks, self.batch_size)
+        mask_areas = tf.split(mask_areas, self.batch_size)
         real_locals = []
         fake_locals = []
-        for real, fake, mask in zip(reals, fakes, masks):
+        for real, fake, mask_area in zip(reals, fakes, mask_areas):
             # １次元目のバッチを示す次元を削除
             fake = K.squeeze(fake, 0)
             real = K.squeeze(real, 0)
-            mask = K.squeeze(mask, 0)
-            # print("real, fake, mask:", real, fake, mask)
-            ind = tf.where(mask > 0)
-            top = K.min(ind[:, 0])
-            left = K.min(ind[:, 1])
-            h = K.max(ind[:, 0]) - top
-            w = K.max(ind[:, 1]) - left
+            mask_area = K.cast(K.squeeze(mask_area, 0), tf.int32)
+            top = mask_area[0]
+            left = mask_area[1]
+            h = mask_area[2] - top
+            w = mask_area[3] - left
 
-            # print("top, left, h, w:", top, left, h, w)
             # top = util.tfprint(top, prefix="top_debug")
             # left = util.tfprint(left, prefix="left_debug")
             # h = util.tfprint(h, prefix="h_debug")
             # w = util.tfprint(w, prefix="w_debug")
 
-            # TypeError: Input 'begin' of 'StridedSliceGrad' Op has type
-            # int64 that does not match type int32 of argument 'shape'.
-            # への対策のためのint32へのcast
             fake_local = tf.image.crop_to_bounding_box(
-                fake, K.cast(top, tf.int32), K.cast(left, tf.int32),
-                K.cast(h, tf.int32), K.cast(w, tf.int32))
+                fake, top, left, h, w)
             fake_locals.append(fake_local)
 
             real_local = tf.image.crop_to_bounding_box(
@@ -313,9 +302,13 @@ class Glcic:
         # マスク部分を一定の色（単純に黒にする）で塗りつぶした画像
         input_masked_image = KL.Input(
             shape=self.input_shape, name='input_masked_image', dtype='float32')
-        # マスクは入力画像と同じサイズのバイナリマスク
+        # バイナリマスク
         input_bin_mask = KL.Input(
             shape=self.input_shape[:2], name='input_bin_mask', dtype='float32')
+        # マスク領域
+        # [y1,x1,y2,x2]
+        input_mask_area = KL.Input(
+            shape=[4], name='input_mask_area', dtype='int32')
         # 入力画像そのまま
         input_real_global = KL.Input(
             shape=self.input_shape, name='input_real_global', dtype='float32')
@@ -342,7 +335,7 @@ class Glcic:
         # localの画像はマスク領域の画像を切り抜いて評価
         real_local, fake_local = KL.Lambda(lambda x: self._crop_local(*x),
                                            name='crop_local')(
-            [input_real_global, fake_global, input_bin_mask])
+            [input_real_global, fake_global, input_mask_area])
         prob_real = model_dis([input_real_global, real_local])
         prob_fake = model_dis([fake_global, fake_local])
         # print("prob_real: ", prob_real)
@@ -363,7 +356,8 @@ class Glcic:
         losses.append(loss.discriminator(d_loss_alpha))
 
         model_all = self._build_model([input_masked_image, input_bin_mask,
-                                       input_real_global], outputs, 'gen+dis')
+                                       input_mask_area, input_real_global],
+                                      outputs, 'gen+dis')
 
         wrapped_model = self._compile_model(model_all, losses,
                                             gpu_num, learning_rate)

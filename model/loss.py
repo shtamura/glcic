@@ -1,15 +1,6 @@
 from keras import backend as K
-from keras import losses as KLoss
 import tensorflow as tf
 from model import util
-
-
-def generator(true, pred):
-    """generatorの損失関数
-    """
-    loss = K.mean(KLoss.mean_squared_error(true, pred))
-    loss = util.tfprint(loss, "generator_loss")
-    return loss
 
 
 def discriminator(alpha):
@@ -21,9 +12,7 @@ def discriminator(alpha):
                     predと同じ次元であればなんでも良い。
                     Kerasのfunctional apiで使いたいのでこのIFにする。
                 pred: [real, fake]
-                    それぞれ0~1に正規化されていること。
-                    sigmoidで処理されていること。
-                    →sigmoidの結果が0or1に2極化してしまうため、ネットワークの出力はそのままとし、この損失関数内でsigmoid_cross_entropy_with_logitsで処理する。
+                    sigmoidの結果が0or1に2極化してしまうため、ネットワークの出力はそのままとし、この損失関数内でsigmoid_cross_entropy_with_logitsで処理する。
                     　参考とする実装に合わせる。
     　                https://github.com/tadax/glcic
         """

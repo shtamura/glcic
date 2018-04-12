@@ -22,6 +22,10 @@ class Config:
     def mask_size(self, value):
         self._mask_size = value
         self.mask_shape = [value, value, 3]
+        # 欠損領域のサイズはマスクサイズの1/2~3/4とする
+        # 論文では99以内とある。
+        self.hole_min = value // 2
+        self.hole_max = value // 4 * 3
 
     def __init__(self):
         self.input_size = 256

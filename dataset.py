@@ -52,16 +52,24 @@ class DataGenerator:
         x1 = random.randint(x1, x2 - self.config.mask_size - 1)
         y2 = y1 + self.config.mask_size
         x2 = x1 + self.config.mask_size
+        mask_window = (y1, x1, y2, x2)
+
+        # 穴もマスク領域内でランダム
+        h, w = np.random.randint(self.config.hole_min,
+                                 self.config.hole_max + 1, 2)
+        py1 = y1 + np.random.randint(0, self.config.mask_size - h)
+        px1 = x1 + np.random.randint(0, self.config.mask_size - w)
+        py2 = py1 + h
+        px2 = px1 + w
+
         masked_image = resized_image.copy()
         # 論文中では「データセット中の画像の平均ピクセル値で塗りつぶす」とあるが0にする。
         # ネットワークに投入する際の正規化で−1（非0）になるのでこれで良さそう。
-        masked_image[y1:y2 + 1, x1:x2 + 1, :] = 0
+        masked_image[py1:py2 + 1, px1:px2 + 1, :] = 0
 
         # バイナリマスク
         bin_mask = np.zeros(resized_image.shape[0:2])
-        bin_mask[y1:y2 + 1, x1:x2 + 1] = 1
-
-        mask_window = (y1, x1, y2, x2)
+        bin_mask[py1:py2 + 1, px1:px2 + 1] = 1
 
         return resized_image, bin_mask, masked_image, mask_window
 
@@ -77,8 +85,9 @@ class DataGenerator:
                     resized_images = []
                     bin_masks = []
                     masked_images = []
+                    mask_windows = []
 
-                resized_image, bin_mask, masked_image, _ = \
+                resized_image, bin_mask, masked_image, mask_window = \
                     self.load_image(path)
                 if resized_image is None:
                     continue
@@ -90,17 +99,20 @@ class DataGenerator:
                 resized_images.append(resized_image)
                 bin_masks.append(bin_mask)
                 masked_images.append(masked_image)
+                mask_windows.append(mask_window)
 
                 if i == self.config.batch_size:
                     resized_images = np.array(resized_images)
                     bin_masks = np.array(bin_masks)
                     masked_images = np.array(masked_images)
+                    mask_windows = np.array(mask_windows, dtype=np.int32)
 
                     inputs = [masked_images, bin_masks]
                     targets = []
                     if train_generator:
                         targets.append(resized_images)
                     if train_discriminator:
+                        inputs.append(mask_windows)
                         inputs.append(resized_images)
                         # discriminatorの正解データ
                         # networkの実装に合わせて[real, fake]=[1,0]とする
