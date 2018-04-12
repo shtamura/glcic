@@ -329,7 +329,7 @@ class Glcic:
             losses = []
         else:
             outputs = [fake_global]
-            losses = [loss.generator]
+            losses = ['mean_squared_error']
 
         # 本物、generatorが生成した偽物をdiscriminatorに評価させる
         # localの画像はマスク領域の画像を切り抜いて評価
