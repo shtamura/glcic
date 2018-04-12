@@ -18,6 +18,8 @@ def discriminator(alpha):
         """
         real = pred[:, 0]
         fake = pred[:, 1]
+        real = util.tfprint(real, "discriminator_real_debug")
+        fake = util.tfprint(fake, "discriminator_fake_debug")
         loss_real = K.mean(tf.nn.sigmoid_cross_entropy_with_logits(
             logits=real, labels=tf.ones_like(real))) * alpha
         # loss_real = util.tfprint(loss_real, "loss_real_debug")
