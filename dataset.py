@@ -30,7 +30,7 @@ class DataGenerator:
         入力画像、バイナリマスク、バイナリマスクで切り出した画像を得る。
         マスクはランダム。複数の入力画像に共通で適用できるマスクであること。
         """
-        logger.info("load file:%s", path)
+        logger.debug("load file:%s", path)
 
         image = cv2.imread(path, cv2.IMREAD_COLOR)
         if image is None:

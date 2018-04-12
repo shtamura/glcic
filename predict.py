@@ -38,7 +38,7 @@ argparser.add_argument('--input_path', type=str,
                        required=True, help="入力画像ファイルのパス." +
                        "[,]区切りで複数指定.ディレクトリ指定の場合は配下のファイルを全て読み込む." +
                        "data_dir/train, data_dir/valの両方がある想定.")
-argparser.add_argument('--weight_path', type=str,
+argparser.add_argument('--weights_path', type=str,
                        required=True, help="モデルの重みファイルのパス")
 args = argparser.parse_args()
 logger.info("args: %s", args)
@@ -59,9 +59,11 @@ model, _ = network.compile_generator(
     gpu_num=config.gpu_num,
     learning_rate=config.learning_rate)
 
+# 重み反映
+model.load_weights(args.weights_path, by_name=True)
 
-def pred(path):
-    logger.info("input_path: %s", path)
+
+def save_prediction(path):
     # 出力先パス
     template = './out/' + re.split('/|\.', path)[-2] + '_{}.png'
 
@@ -89,28 +91,20 @@ def pred(path):
     # 非正規化（-1~1から0~255に戻す）
     completion_image = gen.denormalize_image(completion_image)
 
-    # 入力画像
-    bin_mask = np.expand_dims(bin_mask, -1)
-    # 出力画像
-    # マスク部分のみ
-    # cropped = completion_image * bin_mask
-    # マスク部分を入力画像に重ねる
-    # y1, x1, y2, x2 = mask_window
-    # merged = resized_image.copy()
-    # merged[y1:y2 + 1, x1:x2 + 1] = completion_image[y1:y2 + 1, x1:x2 + 1]
-    merged = completion_image
     # cv2.imwrite(template.format('_in_res'), resized_image)
+    # bin_mask = np.expand_dims(bin_mask, -1)
     # cv2.imwrite(template.format('_in_bin'), bin_mask * 255)
     # cv2.imwrite(template.format('_in_msk'), masked_image)
     # cv2.imwrite(template.format('_out_raw'), completion_image)
+    # マスク部分のみ
+    # cropped = completion_image * bin_mask
     # cv2.imwrite(template.format('_out_crp'), cropped)
-    # cv2.imwrite(template.format('_out_mrg'), merged)
 
     resized_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)
     masked_image = cv2.cvtColor(masked_image, cv2.COLOR_BGR2RGB)
-    merged = cv2.cvtColor(merged, cv2.COLOR_BGR2RGB)
+    completion_image = cv2.cvtColor(completion_image, cv2.COLOR_BGR2RGB)
 
-    def show_image(_img, _label, _num):
+    def plot_image(_img, _label, _num):
         plt.subplot(1, 3, _num)
         plt.imshow(_img)
         # plt.axis('off')
@@ -121,9 +115,9 @@ def pred(path):
         plt.xlabel(_label)
 
     plt.figure(figsize=(6, 3))
-    show_image(masked_image, 'Input', 1)
-    show_image(merged, 'Output', 2)
-    show_image(resized_image, 'Ground Trueth', 3)
+    plot_image(masked_image, 'Input', 1)
+    plot_image(completion_image, 'Output', 2)
+    plot_image(resized_image, 'Ground Truth', 3)
     plt.savefig(template.format(''))
 
 
@@ -133,4 +127,13 @@ else:
     paths = args.input_path.split(',')
 
 for path in paths:
-    pred(path)
+    save_prediction(path)
+
+# inputs = generator.generate(args.input_path, False, False)
+# # inputs, _ = next(inputs)
+# outputs = model.predict_generator(inputs, steps=2, verbose=1)
+# outputs = np.split(outputs, outputs.shape[0], axis=0)
+# for i, output in enumerate(outputs):
+#     output = np.squeeze(output, 0)
+#     output = generator.denormalize_image(output)
+#     cv2.imwrite('./out/{}.png'.format(i), output)
