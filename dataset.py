@@ -10,8 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class DataGenerator:
-    def __init__(self, config):
+    def __init__(self, config, random_hole=True):
         self.config = config
+        self.random_hole = random_hole
 
     def normalize_image(self, image):
         """generatorの出力はtanhで活性化されていることを考慮し、-1~1に正規化する。
@@ -47,16 +48,23 @@ class DataGenerator:
             logger.warn("指定のマスク領域が確保出来ない画像なのでスキップ: %s", window)
             return None, None, None, None
 
-        # マスク領域はランダム
-        y1 = random.randint(y1, y2 - self.config.mask_size - 1)
-        x1 = random.randint(x1, x2 - self.config.mask_size - 1)
+        # マスク領域
+        if self.random_hole:
+            y1 = random.randint(y1, y2 - self.config.mask_size - 1)
+            x1 = random.randint(x1, x2 - self.config.mask_size - 1)
+        else:
+            y1 = y1 + (y2 - y1) // 4
+            x1 = x1 + (x2 - x1) // 4
         y2 = y1 + self.config.mask_size
         x2 = x1 + self.config.mask_size
         mask_window = (y1, x1, y2, x2)
 
-        # 穴もマスク領域内でランダム
-        h, w = np.random.randint(self.config.hole_min,
-                                 self.config.hole_max + 1, 2)
+        # マスク領域内の穴（マスクビットを立てる領域）
+        if self.random_hole:
+            h, w = np.random.randint(self.config.hole_min,
+                                     self.config.hole_max + 1, 2)
+        else:
+            h, w = self.config.hole_max, self.config.hole_max
         py1 = y1 + np.random.randint(0, self.config.mask_size - h)
         px1 = x1 + np.random.randint(0, self.config.mask_size - w)
         py2 = py1 + h

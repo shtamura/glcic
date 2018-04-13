@@ -168,7 +168,8 @@ callbacks = [keras.callbacks.TerminateOnNaN(),
 
 if args.testimage_path and not args.stage == 2:
     # epoch毎にgeneratorの出力を保存
-    test_data_generator = gen.generate(args.testimage_path, False, False)
+    test_data_generator = gen.generate(args.testimage_path,
+                                       train_generator, train_discriminator)
     inputs, _ = next(test_data_generator)
     callbacks.append(SaveGeneratorOutput(gen, config.batch_size, inputs))
 
@@ -185,6 +186,5 @@ model.fit_generator(train_data_generator,
                     validation_steps=5)
 
 # 訓練終了時の重みも保存
-model_file_path = './nnmodel/glcic-latest-stage{}-{}'.format(
-    args.stage, '{epoch:02d}-{val_loss:.2f}.h5')
+model_file_path = './nnmodel/glcic-latest-stage{}.h5'.format(args.stage)
 model.save_weights(model_file_path)

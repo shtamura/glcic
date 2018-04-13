@@ -43,6 +43,8 @@ argparser.add_argument('--input_path', type=str,
                        "data_dir/train, data_dir/valの両方がある想定.")
 argparser.add_argument('--weights_path', type=str,
                        required=True, help="モデルの重みファイルのパス")
+argparser.add_argument('--random_hole', type=int, default=1,
+                       required=False, help="穴(欠損領域)の位置をランダムにするか。Falseで固定。")
 args = argparser.parse_args()
 logger.info("args: %s", args)
 
@@ -51,7 +53,7 @@ config.batch_size = 1
 
 # 入力画像の読み込み
 # リサイズ、ランダムに切り抜き
-gen = DataGenerator(config)
+gen = DataGenerator(config, random_hole=args.random_hole)
 
 # 学習モデル
 network = Glcic(batch_size=config.batch_size, input_shape=config.input_shape,
