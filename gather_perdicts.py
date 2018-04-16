@@ -52,6 +52,7 @@ for image, filename in zip(images, filenames):
 
     def plot_image(_img, _label, _num):
         plt.subplot(1, 7, _num)
+        plt.subplots_adjust(left=0.01, right=0.99, top=0.99, bottom=0.01)
         plt.imshow(_img)
         # plt.axis('off')
         plt.gca().get_xaxis().set_ticks_position('none')
@@ -60,7 +61,7 @@ for image, filename in zip(images, filenames):
         plt.tick_params(labelleft='off')
         plt.xlabel(_label)
 
-    plt.figure(figsize=(30, 4))
+    plt.figure(figsize=(25, 4))
     plot_image(image[0], 'Input', 1)
     plot_image(image[1], 'Ground Truth', 2)
     plot_image(image[2], '20epochs', 3)
