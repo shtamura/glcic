@@ -63,10 +63,12 @@ class DataGenerator:
         if self.random_hole:
             h, w = np.random.randint(self.config.hole_min,
                                      self.config.hole_max + 1, 2)
+            py1 = y1 + np.random.randint(0, self.config.mask_size - h)
+            px1 = x1 + np.random.randint(0, self.config.mask_size - w)
         else:
             h, w = self.config.hole_max, self.config.hole_max
-        py1 = y1 + np.random.randint(0, self.config.mask_size - h)
-        px1 = x1 + np.random.randint(0, self.config.mask_size - w)
+            py1 = y1 + (self.config.mask_size - h) // 2
+            px1 = x1 + (self.config.mask_size - w) // 2
         py2 = py1 + h
         px2 = px1 + w
 

@@ -45,6 +45,7 @@ argparser.add_argument('--weights_path', type=str,
                        required=True, help="モデルの重みファイルのパス")
 argparser.add_argument('--random_hole', type=int, default=1,
                        required=False, help="穴(欠損領域)の位置をランダムにするか。Falseで固定。")
+argparser.add_argument('--dest', type=str, default='./out/', required=False)
 args = argparser.parse_args()
 logger.info("args: %s", args)
 
@@ -70,7 +71,7 @@ model.load_weights(args.weights_path, by_name=True)
 
 def save_prediction(path):
     # 出力先パス
-    template = './out/' + re.split('/|\.', path)[-2] + '_{}.png'
+    template = os.path.join(args.dest, re.split('/|\.', path)[-2] + '_{}.png')
 
     # 入力画像
     resized_image, bin_mask, masked_image, mask_window = \

@@ -58,16 +58,39 @@ python3 predict.py --weights_path ./model/glcic-stage3-xx.h5 --input_path /path/
 ```
 
 ### 結果
-学習中...
-- stage1: xxイテレーション
-- stage2: xxイテレーション
-- stage3: xxイテレーション
+#### 学習回数
+- stage1: 16サンプル * 100ステップ * 100epoch
+- stage2: 16サンプル * 100ステップ * 100epoch
+- stage3: 16サンプル * 100ステップ * 100epoch
+
+論文では、K80GPU×4のマシン1台で約2ヶ月学習したとのこと。
+
+> The entire training procedure takes roughly 2 months on a single machine equipped with four K80 GPUs.
+
+上記はGCPのK80×1を1台で各合計30時間程度なので、到底及ばず。。。
+
+#### stage3における20epoch毎の出力画像
+![](resource/result001.png)
+![](resource/result002.png)
+![](resource/result003.png)
+![](resource/result004.png)
+![](resource/result005.png)
+![](resource/result006.png)
 
 
-# 課題
-学習中...
-- 複数GPU対応
-  - 未検証
+#### 結果考察
+- stage3最終版の出力画像では、もや〜っと正解データらしきものは得られているが、まだ錯覚のレベル。  
+単に周辺画像を繰り返してモザイクかけたような出力と大差が無い。  
+改善のためには、更なる学習とともに、各ステージでパラメータ（discriminatorの損失関数のalpha等)を調整する必要がありそう。  
+論文に以下のような記述がある。
+> In practice, we take a more fine-grained control, such as initially keeping the norm of the MSE loss gradient roughly the same order of magnitude as the norm of the discriminator gradient. This helps stabilize the learning.
+
+- stage3の中盤からdiscriminatorの損失が0になってしまっていた。
+このせいで、出力画像の精度が低下している可能性はありそう。
+
+# TODO
+- 学習時のパラメータ調整と更なる学習
+- discriminatorの損失関数の見直し
 
 # 参考資料
 - http://hi.cs.waseda.ac.jp/~iizuka/projects/completion/ja/
