@@ -70,12 +70,12 @@ python3 train.py --data_path /path/to/dataset --stage 1
 - stage2  
 discriminatorのみの学習。
 ```
-python3 train_mrcnn.py --weights_path ./model/glcic-latest-stage1-xx.h5 --data_path /path/to/dataset --stage 2
+python3 train.py --weights_path ./model/glcic-latest-stage1-xx.h5 --data_path /path/to/dataset --stage 2
 ```
 - stage3  
 RPN+Headの学習。
 ```
-python3 train_mrcnn.py --weights_path ./model/glcic-latest-stage2-xx.h5 --data_path /path/to/dataset --stage 3
+python3 train.py --weights_path ./model/glcic-latest-stage2-xx.h5 --data_path /path/to/dataset --stage 3
 ```
 各ステージのイテレーションは少なめなので、実行環境や許容されるコストに合わせて調整してください。
 
